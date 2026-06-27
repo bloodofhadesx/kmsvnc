@@ -21,7 +21,8 @@ jobs:
               set -e
               apt-get update
               apt-get install -y build-essential cmake pkg-config \
-                libdrm-dev libvncserver-dev libxkbcommon-dev
+                libdrm-dev libvncserver-dev libxkbcommon-dev \
+                libva-dev libva-drm-dev
               mkdir build && cd build
               cmake .. -DCMAKE_BUILD_TYPE=Release
               make -j$(nproc)
