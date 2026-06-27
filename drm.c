@@ -592,7 +592,23 @@ int drm_open() {
 
     drm->mfb = drmModeGetFB2(drm->drm_fd, drm->plane->fb_id);
     if (!drm->mfb) {
-        KMSVNC_FATAL("Failed to get framebuffer %u: %s\n", drm->plane->fb_id, strerror(errno));
+        fprintf(stderr, "drmModeGetFB2 failed, trying drmModeGetFB...\n");
+        drmModeFBPtr old_fb = drmModeGetFB(drm->drm_fd, drm->plane->fb_id);
+        if (!old_fb) {
+            KMSVNC_FATAL("Failed to get framebuffer %u: %s\n", drm->plane->fb_id, strerror(errno));
+        }
+        drm->mfb = calloc(1, sizeof(drmModeFB2));
+        if (!drm->mfb) KMSVNC_FATAL("memory allocation error\n");
+        drm->mfb->fb_id = old_fb->fb_id;
+        drm->mfb->width = old_fb->width;
+        drm->mfb->height = old_fb->height;
+        drm->mfb->pixel_format = KMSVNC_FOURCC_TO_INT('X', 'R', '2', '4');
+        drm->mfb->modifier = DRM_FORMAT_MOD_NONE;
+        drm->mfb->handles[0] = old_fb->handle;
+        drm->mfb->pitches[0] = old_fb->pitch;
+        drm->mfb->offsets[0] = 0;
+        drmModeFreeFB(old_fb);
+        fprintf(stderr, "Assumed XR24 pixel format (could not query from driver)\n");
     }
     drm->pixfmt_name = drmGetFormatName(drm->mfb->pixel_format);
     drm->mod_vendor = drmGetFormatModifierVendor(drm->mfb->modifier);
