@@ -756,7 +756,10 @@ int drm_vendors() {
         if (drm->mfb->modifier != DRM_FORMAT_MOD_NONE && drm->mfb->modifier != DRM_FORMAT_MOD_LINEAR) {
             printf("warn: modifier is not LINEAR, please create an issue with your driver and modifier.\n");
         }
-        if (drm_kmsbuf_dumb()) return 1;
+        if (drm_kmsbuf_prime() != 0) {
+            fprintf(stderr, "PRIME mmap failed, falling back to dumb mmap\n");
+            if (drm_kmsbuf_dumb()) return 1;
+        }
     }
 
     if (!drm->skip_map && !drm->mapped)
